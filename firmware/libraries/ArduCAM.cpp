@@ -90,7 +90,8 @@ int ArduCAM::bus_write(int address, int value) {
   // take the SS pin low to select the chip:
 #if defined (SPARK)
   SPI.beginTransaction(SPISettings(8*MHZ, MSBFIRST, SPI_MODE0));
-  cbi(_CS, B_CS);
+  //cbi(_CS, B_CS);
+  pinLO(A2);    // TODO: FIX HACK!
 #else
   cbi(P_CS, B_CS);
 #endif
@@ -99,7 +100,8 @@ int ArduCAM::bus_write(int address, int value) {
   SPI.transfer(value);
   // take the SS pin high to de-select the chip:
 #if defined (SPARK)
-	sbi(_CS, B_CS);
+	//sbi(_CS, B_CS);
+	pinHI(A2);  // TODO: FIX HACK!
 	SPI.endTransaction();
 #else
 	sbi(P_CS, B_CS);
@@ -113,7 +115,8 @@ uint8_t ArduCAM::bus_read(int address) {
   // take the SS pin low to select the chip:
 #if defined (SPARK)
   SPI.beginTransaction(SPISettings(8*MHZ, MSBFIRST, SPI_MODE0));
-  cbi(_CS, B_CS);
+  //cbi(_CS, B_CS);
+  pinLO(A2);    // TODO: FIX HACK!
 #else
   cbi(P_CS, B_CS);
 #endif
@@ -122,7 +125,8 @@ uint8_t ArduCAM::bus_read(int address) {
   value = SPI.transfer(0x00);
   // take the SS pin high to de-select the chip:
 #if defined (SPARK)
-	sbi(_CS, B_CS);
+//	sbi(_CS, B_CS);
+	pinHI(A2);  // TODO: FIX HACK!
 	SPI.endTransaction();
 #else
 	sbi(P_CS, B_CS);
@@ -139,7 +143,8 @@ ArduCAM::ArduCAM()
 ArduCAM::ArduCAM(byte model, int CS)
 {
 #if defined (SPARK)
-	_CS = CS;
+	_CS = portOutputRegister(digitalPinToPort(CS));
+	B_CS	= digitalPinToBitMask(CS);
 #else
 	P_CS	= portOutputRegister(digitalPinToPort(CS));
 	B_CS	= digitalPinToBitMask(CS);
@@ -150,7 +155,8 @@ ArduCAM::ArduCAM(byte model, int CS)
 
 	//Must initialize the Bus default status
 #if defined (SPARK)
-	sbi(_CS, B_CS);
+	//sbi(_CS, B_CS);
+	pinHI(A2);  // TODO: FIX HACK!
 #else
 	sbi(P_CS, B_CS);
 #endif

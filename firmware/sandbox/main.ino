@@ -29,6 +29,7 @@ void setup()
   //uint8_t vid,pid;
   uint8_t temp;
 
+  Wire.setSpeed(CLOCK_SPEED_100KHZ);
   Wire.begin();
 
   Serial.begin(115200);
