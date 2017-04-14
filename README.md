@@ -21,13 +21,16 @@ how to see if it's working
 Hoping to see something like "Camera found, initializing..."
 
 
+what camera / sensor I'm using
+---
+
+    https://www.amazon.com/Arducam-Module-Camera-Arduino-Mega2560/dp/B013JUKZ48
+
+
 how it's wired
 ---
 
 This is probably wrong, but it's what I have so far, feedback very welcome.
-
-Photon -- Camera -- Purpose
-A2 -- CS -- SS
 
 |Photon	|Camera	|Purpose|
 |---	|---	|---	|
@@ -35,4 +38,6 @@ A2 -- CS -- SS
 |A3   	|SCK   	|SCK   	|
 |A4   	|MOSI  	|MOSI  	|
 |A5   	|MISO  	|MISO  	|
+|D0   	|SDA    |SDA    |
+|D1   	|SCL    |SCL    |
 

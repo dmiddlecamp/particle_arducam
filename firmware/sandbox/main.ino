@@ -29,7 +29,7 @@ void setup()
   //uint8_t vid,pid;
   uint8_t temp;
 
-  //Wire.begin();
+  Wire.begin();
 
   Serial.begin(115200);
   Serial.println("ArduCAM Start!");

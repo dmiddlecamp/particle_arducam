@@ -89,6 +89,7 @@
 int ArduCAM::bus_write(int address, int value) {
   // take the SS pin low to select the chip:
 #if defined (SPARK)
+  SPI.beginTransaction(SPISettings(8*MHZ, MSBFIRST, SPI_MODE0));
   cbi(_CS, B_CS);
 #else
   cbi(P_CS, B_CS);
@@ -99,6 +100,7 @@ int ArduCAM::bus_write(int address, int value) {
   // take the SS pin high to de-select the chip:
 #if defined (SPARK)
 	sbi(_CS, B_CS);
+	SPI.endTransaction();
 #else
 	sbi(P_CS, B_CS);
 #endif
@@ -110,6 +112,7 @@ uint8_t ArduCAM::bus_read(int address) {
   uint8_t value = 0;
   // take the SS pin low to select the chip:
 #if defined (SPARK)
+  SPI.beginTransaction(SPISettings(8*MHZ, MSBFIRST, SPI_MODE0));
   cbi(_CS, B_CS);
 #else
   cbi(P_CS, B_CS);
@@ -120,6 +123,7 @@ uint8_t ArduCAM::bus_read(int address) {
   // take the SS pin high to de-select the chip:
 #if defined (SPARK)
 	sbi(_CS, B_CS);
+	SPI.endTransaction();
 #else
 	sbi(P_CS, B_CS);
 #endif
