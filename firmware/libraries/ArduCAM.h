@@ -241,6 +241,17 @@
 #define ARDUCHIP_TEST1       	0x00  //TEST register
 #define ARDUCHIP_TEST2      	0x01  //TEST register
 
+#if !(defined OV2640_MINI_2MP)
+	#define ARDUCHIP_FRAMES			  0x01  //FRAME control register, Bit[2:0] = Number of frames to be captured																		//On 5MP_Plus platforms bit[2:0] = 7 means continuous capture until frame buffer is full
+#endif
+
+#define ARDUCHIP_GPIO			  0x06  //GPIO Write Register
+#if !(defined (ARDUCAM_SHIELD_V2) || defined (ARDUCAM_SHIELD_REVC))
+#define GPIO_RESET_MASK			0x01  //0 = Sensor reset,							1 =  Sensor normal operation
+#define GPIO_PWDN_MASK			0x02  //0 = Sensor normal operation, 	1 = Sensor standby
+#define GPIO_PWREN_MASK			0x04	//0 = Sensor LDO disable, 			1 = sensor LDO enable
+#endif
+
 #define ARDUCHIP_MODE      		0x02  //Mode register
 #define MCU2LCD_MODE       		0x00
 #define CAM2LCD_MODE       		0x01
@@ -271,6 +282,14 @@
 #define CAP_DONE_MASK      		0x08
 
 
+#define OV5642_320x240 		0	//320x240
+#define OV5642_640x480		1	//640x480
+#define OV5642_1024x768		2	//1024x768
+#define OV5642_1280x960 	3	//1280x960
+#define OV5642_1600x1200	4	//1600x1200
+#define OV5642_2048x1536	5	//2048x1536
+#define OV5642_2592x1944	6	//2592x1944
+#define OV5642_1920x1080	7 //1920x1080
 
 
 /****************************************************/
@@ -318,6 +337,14 @@ class ArduCAM
 
 		void OV2640_set_JPEG_size(uint8_t size);
 		void set_format(byte fmt);
+
+		void OV5642_set_JPEG_size(uint8_t size);
+
+
+        void set_bit(uint8_t addr, uint8_t bit);
+        void clear_bit(uint8_t addr, uint8_t bit);
+        uint8_t get_bit(uint8_t addr, uint8_t bit);
+        void set_mode(uint8_t mode);
 
 		int bus_write(int address, int value);
 		uint8_t bus_read(int address);

@@ -228,6 +228,54 @@ void ArduCAM::write_reg(uint8_t addr, uint8_t data)
 	bus_write(addr | 0x80, data);
 }
 
+//My add
+//Set corresponding bit
+void ArduCAM::set_bit(uint8_t addr, uint8_t bit)
+{
+	uint8_t temp;
+	temp = read_reg(addr);
+	write_reg(addr, temp | bit);
+}
+//Clear corresponding bit
+void ArduCAM::clear_bit(uint8_t addr, uint8_t bit)
+{
+	uint8_t temp;
+	temp = read_reg(addr);
+	write_reg(addr, temp & (~bit));
+}
+
+//Get corresponding bit status
+uint8_t ArduCAM::get_bit(uint8_t addr, uint8_t bit)
+{
+  uint8_t temp;
+  temp = read_reg(addr);
+  temp = temp & bit;
+  return temp;
+}
+
+//Set ArduCAM working mode
+//MCU2LCD_MODE: MCU writes the LCD screen GRAM
+//CAM2LCD_MODE: Camera takes control of the LCD screen
+//LCD2MCU_MODE: MCU read the LCD screen GRAM
+void ArduCAM::set_mode(uint8_t mode)
+{
+  switch (mode)
+  {
+    case MCU2LCD_MODE:
+      write_reg(ARDUCHIP_MODE, MCU2LCD_MODE);
+      break;
+    case CAM2LCD_MODE:
+      write_reg(ARDUCHIP_MODE, CAM2LCD_MODE);
+      break;
+    case LCD2MCU_MODE:
+      write_reg(ARDUCHIP_MODE, LCD2MCU_MODE);
+      break;
+    default:
+      write_reg(ARDUCHIP_MODE, MCU2LCD_MODE);
+      break;
+  }
+}
+
 byte ArduCAM::wrSensorReg8_8(int regID, int regDat)
 {
 	Wire.beginTransmission(sensor_addr >> 1);
@@ -573,7 +621,7 @@ void ArduCAM::InitCAM()
 			}
 			else
 			{
-				wrSensorRegs16_8(OV5642_RGB_QVGA);
+				wrSensorRegs16_8(OV5642_QVGA_Preview);
 				rdSensorReg16_8(0x3818,&reg_val);
 				wrSensorReg16_8(0x3818, (reg_val | 0x60) & 0xff);
 				rdSensorReg16_8(0x3621,&reg_val);
@@ -629,4 +677,39 @@ void ArduCAM::InitCAM()
 
 			break;
 	}
+}
+
+void ArduCAM::OV5642_set_JPEG_size(uint8_t size)
+{
+#if defined(OV5642_CAM) || defined(OV5642_CAM_BIT_ROTATION_FIXED)|| defined(OV5642_MINI_5MP) || defined (OV5642_MINI_5MP_PLUS)
+  uint8_t reg_val;
+
+  switch (size)
+  {
+    case OV5642_320x240:
+      wrSensorRegs16_8(ov5642_320x240);
+      break;
+    case OV5642_640x480:
+      wrSensorRegs16_8(ov5642_640x480);
+      break;
+    case OV5642_1024x768:
+      wrSensorRegs16_8(ov5642_1024x768);
+      break;
+    case OV5642_1280x960:
+      wrSensorRegs16_8(ov5642_1280x960);
+      break;
+    case OV5642_1600x1200:
+      wrSensorRegs16_8(ov5642_1600x1200);
+      break;
+    case OV5642_2048x1536:
+      wrSensorRegs16_8(ov5642_2048x1536);
+      break;
+    case OV5642_2592x1944:
+      wrSensorRegs16_8(ov5642_2592x1944);
+      break;
+    default:
+      wrSensorRegs16_8(ov5642_320x240);
+      break;
+  }
+#endif
 }

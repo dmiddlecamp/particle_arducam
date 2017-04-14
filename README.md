@@ -30,7 +30,8 @@ what camera / sensor I'm using
 how it's wired
 ---
 
-This is probably wrong, but it's what I have so far, feedback very welcome.
+This is probably wrong, but it's what I have so far, feedback very welcome.  Don't forget to use PULL-UP resistors on
+ the I2C D0/D1 pins
 
 |Photon	|Camera	|Purpose|
 |---	|---	|---	|

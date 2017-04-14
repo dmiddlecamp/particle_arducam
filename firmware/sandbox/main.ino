@@ -74,69 +74,100 @@ void setup()
 //    }
 //  }
 //
-//Change to JPEG capture mode and initialize the OV5640 module
-//  myCAM1.set_format(JPEG);
-//  myCAM1.InitCAM();
-//  myCAM1.write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK);   //VSYNC is active HIGH
-//  myCAM1.clear_fifo_flag();
-//  myCAM1.write_reg(ARDUCHIP_FRAMES, FRAMES_NUM);
-//
-//  //myCAM1.OV5642_set_JPEG_size(OV5642_640x480); delay(1000);
-//  myCAM1.OV5642_set_JPEG_size(OV5642_320x240); delay(1000);
-//  delay(1000);
-//  myCAM1.clear_fifo_flag();
-//  Serial.println("Ready:,1");
+
 
 
 
   Serial.println("Camera found, initializing...");
 
-  //Change MCU mode
-  myCAM.write_reg(ARDUCHIP_MODE, 0x00);
-  myCAM.InitCAM();
+    //Change MCU mode
+    myCAM.set_format(JPEG);
+    myCAM.InitCAM();
+    myCAM.write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK);
+    myCAM.clear_fifo_flag();
+    myCAM.write_reg(ARDUCHIP_FRAMES,0x00);
+    myCAM.set_bit(ARDUCHIP_GPIO,GPIO_PWDN_MASK);
+
+
 }
 
 void loop()
 {
+Serial.println("Taking a picture...");
+
+    myCAM.OV5642_set_JPEG_size(OV5642_320x240);
+    myCAM.flush_fifo();
+    myCAM.clear_fifo_flag();
+    myCAM.start_capture();
+   // start_capture = 0;
+
+    Serial.println("waiting for photo to finish..?");
+   delay(10 * 1000);
+
+    uint8_t temp = 0xff, temp_last = 0;
+
+
+    if(myCAM.get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK))
+    {
+        Serial.println(F("ACK CMD CAM Capture Done."));
+        temp = 0;
+        Serial.println(F("ACK IMG"));
+        while( (temp != 0xD9) | (temp_last != 0xFF) )
+        {
+          temp_last = temp;
+          temp = myCAM.read_fifo();
+          Serial.write(temp);
+          delayMicroseconds(15);
+        }
+        //Clear the capture done flag
+        myCAM.clear_fifo_flag();
+
+        Serial.println(F("End of Photo"));
+    }
+
+    Serial.println("sleeping 10 seconds");
+    delay(10 * 1000);
+
+
 //  char str[8];
 //  unsigned long previous_time = 0;
 //  static int k = 0;
 //  uint8_t temp;
 //
-//  myCAM.write_reg(ARDUCHIP_MODE, 0x01);		 	//Switch to CAM
+////  myCAM.write_reg(ARDUCHIP_MODE, 0x01);		 	//Switch to CAM
 //
-//  while(1)
-//  {
+//
 //    temp = myCAM.read_reg(ARDUCHIP_TRIG);
 //
 //    if(!(temp & VSYNC_MASK))				//New Frame is coming
 //    {
-//       myCAM.write_reg(ARDUCHIP_MODE, 0x00);    	//Switch to MCU
-////       myGLCD.resetXY();
-//       myCAM.write_reg(ARDUCHIP_MODE, 0x01);    	//Switch to CAM
-//       while(!(myCAM.read_reg(ARDUCHIP_TRIG)&0x01));	//Wait for VSYNC is gone
+//        myCAM.write_reg(ARDUCHIP_MODE, 0x00);    	//Switch to MCU
+//        myCAM.write_reg(ARDUCHIP_MODE, 0x01);    	//Switch to CAM
+//        while(!(myCAM.read_reg(ARDUCHIP_TRIG)&0x01));	//Wait for VSYNC is gone
 //    }
-//	else if ((temp & SHUTTER_MASK))
-//	{
-//       previous_time = millis();
-//       while(myCAM.read_reg(ARDUCHIP_TRIG) & SHUTTER_MASK)
-//       {
-//         if((millis() - previous_time) > 1500)
-//         {
-//           Playback();
-//         }
-//       }
-//       if((millis() - previous_time) < 1500)
-//       {
-//         k = k + 1;
-//         itoa(k, str, 10);
-//         strcat(str,".bmp");				//Generate file name
-//         myCAM.write_reg(ARDUCHIP_MODE, 0x00);    	//Switch to MCU, freeze the screen
-//         GrabImage(str);
-//       }
+//    else if ((temp & SHUTTER_MASK))
+//    {
+//        previous_time = millis();
+//        while(myCAM.read_reg(ARDUCHIP_TRIG) & SHUTTER_MASK)
+//        {
+//            if((millis() - previous_time) > 1500)
+//            {
+//               Playback();
+//            }
+//        }
+//        if((millis() - previous_time) < 1500)
+//        {
+//            k = k + 1;
+//            itoa(k, str, 10);
+//            strcat(str,".bmp");				//Generate file name
+//            myCAM.write_reg(ARDUCHIP_MODE, 0x00);    	//Switch to MCU, freeze the screen
+//            GrabImage(str);
+//        }
 //    }
-//  }
+
+
 }
+
 //
 //
 //void GrabImage(char* str)
@@ -194,11 +225,16 @@ void loop()
 //      VL = myCAM.read_fifo();
 //      buf[k++] = VL;
 //      buf[k++] = VH;
+//
+//      Serial.print(String::format("y:%d x:%d VH:%d VL:%d", i, j, VL, VH));
+//
 //      //Write image data to bufer if not full
 //      if(k >= 256)
 //      {
 //        //Write 256 bytes image data to file from buffer
 //        //outFile.write(buf,256);
+//
+//        //Serial.println("data: " + String(buf, HEX));
 //          //------------------------------
 //          //---Serial print here    outFile.write(buf,256);
 //          //------------------------------
@@ -311,4 +347,4 @@ void loop()
 //*/
 //}
 //
-
+//
