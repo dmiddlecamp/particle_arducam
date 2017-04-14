@@ -1,5 +1,6 @@
 #include "ArduCAM.h"
 
+SYSTEM_THREAD(ENABLED);
 
 #define BMPIMAGEOFFSET 66
 
