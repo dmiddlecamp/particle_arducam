@@ -95,7 +95,11 @@
 #ifndef ArduCAM_H
 #define ArduCAM_H
 #include "memorysaver.h"
-#if defined ( RASPBERRY_PI ) 
+
+#if defined ( RASPBERRY_PI )
+#elif defined ( PARTICLE )
+    #include "application.h"
+    #include "Arduino.h"
 #else
 	#include "Arduino.h"
 	#include <pins_arduino.h>
@@ -182,7 +186,17 @@
 
 #if defined(__arm__)
 
-#if defined (RASPBERRY_PI)
+
+
+#if defined (PARTICLE)
+  #define regtype volatile uint32_t
+  #define regsize uint32_t
+
+  //workaround for the deferencing issue, fix when issue is resolved.
+  #define sbi(sfr, bit) ((*sfr) |= _BV(bit))
+  #define cbi(sfr, bit) ((*sfr) &= ~_BV(bit))
+
+#elif defined (RASPBERRY_PI)
 	#define regtype volatile uint32_t
 	#define regsize uint32_t 
 	#define byte uint8_t

@@ -102,6 +102,9 @@
 	#include <wiringPi.h>
 	#include "ArduCAM.h"
 	#include "arducam_arch_raspberrypi.h"
+#elif defined (PARTICLE)
+    #include "ArduCAM.h"
+    #include "Arduino.h"
 #else
 	#include "Arduino.h"
 	#include "ArduCAM.h"
@@ -678,11 +681,11 @@ void ArduCAM::set_fifo_burst()
 
 void ArduCAM::CS_HIGH(void)
 {
-	 sbi(P_CS, B_CS);	
+	 sbi(P_CS, B_CS);
 }
 void ArduCAM::CS_LOW(void)
 {
-	 cbi(P_CS, B_CS);	
+	 cbi(P_CS, B_CS);
 }
 
 uint8_t ArduCAM::read_fifo(void)
@@ -761,7 +764,7 @@ void ArduCAM::set_mode(uint8_t mode)
 }
 
 uint8_t ArduCAM::bus_write(int address,int value)
-{	
+{
 	cbi(P_CS, B_CS);
 	#if defined (RASPBERRY_PI)
 		arducam_spi_write(address | 0x80, value);
