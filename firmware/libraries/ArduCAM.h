@@ -281,6 +281,10 @@
 #define SHUTTER_MASK       		0x02
 #define CAP_DONE_MASK      		0x08
 
+#define FIFO_SIZE1				0x42  //Camera write FIFO size[7:0] for burst to read
+#define FIFO_SIZE2				0x43  //Camera write FIFO size[15:8]
+#define FIFO_SIZE3				0x44  //Camera write FIFO size[18:16]
+
 
 #define OV5642_320x240 		0	//320x240
 #define OV5642_640x480		1	//640x480
@@ -339,7 +343,7 @@ class ArduCAM
 		void set_format(byte fmt);
 
 		void OV5642_set_JPEG_size(uint8_t size);
-
+        uint32_t read_fifo_length(void);
 
         void set_bit(uint8_t addr, uint8_t bit);
         void clear_bit(uint8_t addr, uint8_t bit);

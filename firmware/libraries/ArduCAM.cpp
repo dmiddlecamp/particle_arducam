@@ -209,6 +209,16 @@ void ArduCAM::clear_fifo_flag(void)
 	write_reg(ARDUCHIP_FIFO, FIFO_CLEAR_MASK);
 }
 
+uint32_t ArduCAM::read_fifo_length(void)
+{
+	uint32_t len1,len2,len3,length=0;
+	len1 = read_reg(FIFO_SIZE1);
+  len2 = read_reg(FIFO_SIZE2);
+  len3 = read_reg(FIFO_SIZE3) & 0x7f;
+  length = ((len3 << 16) | (len2 << 8) | len1) & 0x07fffff;
+	return length;
+}
+
 uint8_t ArduCAM::read_fifo(void)
 {
 	uint8_t data;

@@ -1,4 +1,5 @@
 #include "ArduCAM.h"
+#include "memorysaver.h"
 
 SYSTEM_THREAD(ENABLED);
 
@@ -27,7 +28,11 @@ ArduCAM myCAM(OV5642, SPI_CS);
 
 void setup()
 {
-  //uint8_t vid,pid;
+
+  Particle.publish("status", "Good morning");
+  delay(1000);
+
+  uint8_t vid,pid;
   uint8_t temp;
 
   Wire.setSpeed(CLOCK_SPEED_100KHZ);
@@ -46,6 +51,7 @@ void setup()
 
 
   while(1) {
+    Particle.publish("status", "checking for camera");
     Serial.println("Checking for camera...");
 
     //Check if the ArduCAM SPI bus is OK
@@ -55,11 +61,12 @@ void setup()
     {
       Serial.println("SPI interface Error!");
       Serial.println("myCam.read_reg said " + String(temp));
-      delay(1000);
+      delay(5000);
     }
     else {
       break;
     }
+    Particle.process();
   }
 
 //NOTES
@@ -75,8 +82,25 @@ void setup()
 //    }
 //  }
 //
+    Particle.publish("status", "Camera found.");
 
 
+while(1){
+  //Check if the camera module type is OV5642
+  myCAM.rdSensorReg16_8(OV5642_CHIPID_HIGH, &vid);
+  myCAM.rdSensorReg16_8(OV5642_CHIPID_LOW, &pid);
+  if ((vid != 0x56) || (pid != 0x42)){
+    Serial.println(F("Can't find OV5642 module!"));
+    Particle.publish("status", "Not found, camera says " + String::format("%d:%d", vid, pid));
+    delay(5000);
+    continue;
+  }
+  else {
+    Serial.println(F("OV5642 detected."));
+    Particle.publish("status", "OV5642 detected: " + String::format("%d:%d", vid, pid));
+    break;
+  }
+}
 
 
   Serial.println("Camera found, initializing...");
@@ -84,33 +108,61 @@ void setup()
     //Change MCU mode
     myCAM.set_format(JPEG);
     myCAM.InitCAM();
-    myCAM.write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK);
+    myCAM.set_bit(ARDUCHIP_TIM, VSYNC_LEVEL_MASK);
+    //myCAM.write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK);
     myCAM.clear_fifo_flag();
     myCAM.write_reg(ARDUCHIP_FRAMES,0x00);
-    myCAM.set_bit(ARDUCHIP_GPIO,GPIO_PWDN_MASK);
+    myCAM.OV5642_set_JPEG_size(OV5642_320x240);
+    delay(1000);
 
+
+    //myCAM.set_bit(ARDUCHIP_GPIO,GPIO_PWDN_MASK);
+
+//myCAM1.OV5642_set_JPEG_size(OV5642_320x240);delay(1000);
 
 }
 
 void loop()
 {
-Serial.println("Taking a picture...");
+    Particle.publish("status", "Taking a picture...1");
+    Serial.println("Taking a picture...");
+    delay(1000);
 
-    myCAM.OV5642_set_JPEG_size(OV5642_320x240);
     myCAM.flush_fifo();
     myCAM.clear_fifo_flag();
     myCAM.start_capture();
-   // start_capture = 0;
 
-    Serial.println("waiting for photo to finish..?");
-   delay(10 * 1000);
+
+//myCAM.start_capture();
+unsigned long start_time = millis(),
+              last_publish = millis();
+
+while(!myCAM.get_bit(ARDUCHIP_TRIG , CAP_DONE_MASK)) {
+    Particle.process();
+    delay(1);
+
+    unsigned long now = millis();
+    if ((now - last_publish) > 1000) {
+        Particle.publish("status", "waiting for photo " + String(now-start_time));
+        last_publish = now;
+    }
+
+    if ((now-start_time) > 30000) {
+        Particle.publish("status", "bailing...");
+        break;
+    }
+}
+
+
+int length = myCAM.read_fifo_length();
+Particle.publish("status", "Image size is " + String(length));
 
     uint8_t temp = 0xff, temp_last = 0;
-
-
     if(myCAM.get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK))
     {
         Serial.println(F("ACK CMD CAM Capture Done."));
+        Particle.publish("status", "Capture done");
+
         temp = 0;
         Serial.println(F("ACK IMG"));
         while( (temp != 0xD9) | (temp_last != 0xFF) )
@@ -127,6 +179,7 @@ Serial.println("Taking a picture...");
     }
 
     Serial.println("sleeping 10 seconds");
+    Particle.publish("status", "Sleeping 10 seconds");
     delay(10 * 1000);
 
 
