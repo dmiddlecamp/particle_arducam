@@ -3,7 +3,7 @@ var net = require('net');
 
 var settings = {
     ip: "127.0.0.1",
-    port: "5550"
+    port: 5550
 };
 
 var moment = require('moment');
@@ -43,9 +43,10 @@ var server = net.createServer(function (socket) {
         var data = socket.read();
 		leakyBufferFn(data);
 
-		if (data) {
-			console.log("received data: " + data.toString('HEX'));
-		}
+		// this slows us down
+		//		if (data) {
+		//			console.log("received data: " + data.length + " bytes");
+		//		}
     });
 });
 

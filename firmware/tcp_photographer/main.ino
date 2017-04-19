@@ -2,6 +2,7 @@
 #include "memorysaver.h"
 SYSTEM_THREAD(ENABLED);
 
+#define VERSION_SLUG "7n"
 
 TCPClient client;
 
@@ -38,7 +39,7 @@ ArduCAM myCAM(OV5642, SPI_CS);
 
 void setup()
 {
-  Particle.publish("status", "Good morning");
+  Particle.publish("status", "Good morning, Version: " + String(VERSION_SLUG));
   delay(1000);
 
   uint8_t vid,pid;
@@ -109,8 +110,8 @@ while(1){
     myCAM.InitCAM();
     delay(100);
 
-    myCAM.set_format(JPEG);
-    delay(100);
+//    myCAM.set_format(JPEG);
+//    delay(100);
 
     myCAM.set_bit(ARDUCHIP_TIM, VSYNC_LEVEL_MASK);
     //myCAM.write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK);
@@ -122,11 +123,10 @@ while(1){
     myCAM.write_reg(ARDUCHIP_FRAMES,0x00);
     delay(100);
 
-    //myCAM.OV5642_set_JPEG_size(OV5642_320x240);
+    myCAM.OV5642_set_JPEG_size(OV5642_320x240);
     //myCAM.OV5640_set_JPEG_size(OV5642_1600x1200);
-    myCAM.OV5640_set_JPEG_size(OV5642_640x480);    // ?
-
-    delay(100);
+    //myCAM.OV5640_set_JPEG_size(OV5642_640x480);    // ?
+    //delay(100);
 
     // wait a sec`
     delay(1000);
@@ -140,6 +140,7 @@ while(1){
 void loop()
 {
     if (!client.connected()) {
+        //client.stop();
         Particle.publish("status", "Attempting to reconnect to TCP Server...");
         if (!client.connect(SERVER_ADDRESS, SERVER_TCP_PORT)) {
             delay(1000);
@@ -147,17 +148,16 @@ void loop()
         }
     }
 
-    Particle.publish("status", "Taking a picture... 7l");
+    Particle.publish("status", "Taking a picture...");
     Serial.println("Taking a picture...");
 
 
     //myCAM.OV5640_set_JPEG_size(OV5640_320x240);   //works
     //myCAM.OV5640_set_JPEG_size(OV5642_1600x1200); //doesn't work
     //myCAM.OV5640_set_JPEG_size(OV5642_1280x960);  // doesn't work?
+    //myCAM.OV5640_set_JPEG_size(OV5642_640x480);    // ?
 
-    myCAM.OV5640_set_JPEG_size(OV5642_640x480);    // ?
-
-    //myCAM.OV5642_set_JPEG_size(OV5642_2592x1944); //works
+    myCAM.OV5642_set_JPEG_size(OV5642_2592x1944); //works
     delay(100);
 
     //myCAM.set_bit(ARDUCHIP_GPIO,GPIO_PWDN_MASK);
@@ -239,24 +239,25 @@ void loop()
 
         tx_buffer_index = 0;
         temp = 0;
-        Serial.println(F("ACK IMG"));
+        //Serial.println(F("ACK IMG"));
         //while( (temp != 0xD9) | (temp_last != 0xFF) )
 
         //while (bytesRead < length)
         while( (temp != 0xD9) | (temp_last != 0xFF) )
         {
-          temp_last = temp;
+            temp_last = temp;
 
-          noInterrupts(); // disable interrupts
-          SINGLE_THREADED_BLOCK() {
-              delayMicroseconds(15);
-              temp = myCAM.read_fifo();
-          }
-          interrupts();   // enable interrupts
-          bytesRead++;
+            //delay(1);
+            //noInterrupts(); // disable interrupts
+            //SINGLE_THREADED_BLOCK() {
+                //delayMicroseconds(5);
+            temp = myCAM.read_fifo();
+            //}
+            //interrupts();   // enable interrupts
+            bytesRead++;
 
 
-          buffer[tx_buffer_index++] = temp;
+            buffer[tx_buffer_index++] = temp;
 
             if (tx_buffer_index >= TX_BUFFER_MAX) {
                 client.write(buffer, tx_buffer_index);
