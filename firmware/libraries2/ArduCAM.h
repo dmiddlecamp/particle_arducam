@@ -496,7 +496,7 @@ class ArduCAM
 	uint8_t get_bit(uint8_t addr, uint8_t bit);
 	void set_mode(uint8_t mode);
  
-  uint8_t bus_write(int address, int value);
+    uint8_t bus_write(int address, int value);
 	uint8_t bus_read(int address);	
  
 	// Write 8 bit values to 8 bit register address
