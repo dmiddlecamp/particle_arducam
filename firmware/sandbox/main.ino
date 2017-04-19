@@ -1,9 +1,17 @@
 #include "ArduCAM.h"
 #include "memorysaver.h"
-
 SYSTEM_THREAD(ENABLED);
 
-#define BMPIMAGEOFFSET 66
+
+UDP Udp;
+#define UDP_BROADCAST_PORT 5550
+IPAddress broadcastAddress(255,255,255,255);
+#define UDP_BUFFER_MAX 1024
+uint8_t buffer[UDP_BUFFER_MAX + 1];
+int udp_buffer_index = 0;
+
+
+
 
 //#define SD_CS D2
 
@@ -11,16 +19,16 @@ SYSTEM_THREAD(ENABLED);
 const int SPI_CS = A2;
 
 // allow us to use itoa() in this scope
-extern char* itoa(int a, char* buffer, unsigned char radix);
-
-const char bmp_header[BMPIMAGEOFFSET] PROGMEM =
-{
-      0x42, 0x4D, 0x36, 0x58, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x42, 0x00, 0x00, 0x00, 0x28, 0x00,
-      0x00, 0x00, 0x40, 0x01, 0x00, 0x00, 0xF0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x10, 0x00, 0x03, 0x00,
-      0x00, 0x00, 0x00, 0x58, 0x02, 0x00, 0xC4, 0x0E, 0x00, 0x00, 0xC4, 0x0E, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF8, 0x00, 0x00, 0xE0, 0x07, 0x00, 0x00, 0x1F, 0x00,
-      0x00, 0x00
-};
+//extern char* itoa(int a, char* buffer, unsigned char radix);
+//#define BMPIMAGEOFFSET 66
+//const char bmp_header[BMPIMAGEOFFSET] PROGMEM =
+//{
+//      0x42, 0x4D, 0x36, 0x58, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x42, 0x00, 0x00, 0x00, 0x28, 0x00,
+//      0x00, 0x00, 0x40, 0x01, 0x00, 0x00, 0xF0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x10, 0x00, 0x03, 0x00,
+//      0x00, 0x00, 0x00, 0x58, 0x02, 0x00, 0xC4, 0x0E, 0x00, 0x00, 0xC4, 0x0E, 0x00, 0x00, 0x00, 0x00,
+//      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF8, 0x00, 0x00, 0xE0, 0x07, 0x00, 0x00, 0x1F, 0x00,
+//      0x00, 0x00
+//};
 
 
 ArduCAM myCAM(OV5642, SPI_CS);
@@ -28,7 +36,6 @@ ArduCAM myCAM(OV5642, SPI_CS);
 
 void setup()
 {
-
   Particle.publish("status", "Good morning");
   delay(1000);
 
@@ -69,19 +76,6 @@ void setup()
     Particle.process();
   }
 
-//NOTES
-//   while (1) {
-//    //Check if the camera module type is OV5642
-//    myCAM1.rdSensorReg16_8(OV5642_CHIPID_HIGH, &vid);
-//    myCAM1.rdSensorReg16_8(OV5642_CHIPID_LOW, &pid);
-//    if ((vid != 0x56) || (pid != 0x42)) {
-//      Serial.println(F("Can't find OV5642 module!"));
-//      delay(1000); continue;
-//    } else {
-//      Serial.println(F("OV5642 detected.")); break;
-//    }
-//  }
-//
     Particle.publish("status", "Camera found.");
 
 
@@ -104,75 +98,192 @@ while(1){
 
 
   Serial.println("Camera found, initializing...");
+    //myCAM.write_reg(ARDUCHIP_MODE, 0x01);		 	//Switch to CAM
 
     //Change MCU mode
     myCAM.set_format(JPEG);
+    delay(100);
+
     myCAM.InitCAM();
+    delay(100);
+
+    myCAM.set_format(JPEG);
+    delay(100);
+
     myCAM.set_bit(ARDUCHIP_TIM, VSYNC_LEVEL_MASK);
     //myCAM.write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK);
+    delay(100);
+
     myCAM.clear_fifo_flag();
+    delay(100);
+
     myCAM.write_reg(ARDUCHIP_FRAMES,0x00);
-    myCAM.OV5642_set_JPEG_size(OV5642_320x240);
+    delay(100);
+
+    //myCAM.OV5642_set_JPEG_size(OV5642_320x240);
+    myCAM.OV5642_set_JPEG_size(OV5642_2592x1944);
+    delay(100);
+
+    // wait a sec`
     delay(1000);
 
-
-    //myCAM.set_bit(ARDUCHIP_GPIO,GPIO_PWDN_MASK);
-
-//myCAM1.OV5642_set_JPEG_size(OV5642_320x240);delay(1000);
-
+    Udp.setBuffer(1024);
+    Udp.begin(UDP_BROADCAST_PORT);
 }
+
+
 
 void loop()
 {
-    Particle.publish("status", "Taking a picture...1");
+    Particle.publish("status", "Taking a picture... 7e");
     Serial.println("Taking a picture...");
-    delay(1000);
+
+
+    //myCAM.OV5640_set_JPEG_size(OV5640_320x240);
+    myCAM.OV5642_set_JPEG_size(OV5642_2592x1944);
+    delay(100);
+
+    //myCAM.set_bit(ARDUCHIP_GPIO,GPIO_PWDN_MASK);
+    //myCAM.clear_bit(ARDUCHIP_GPIO,GPIO_PWDN_MASK);
+
 
     myCAM.flush_fifo();
+    delay(100);
+
     myCAM.clear_fifo_flag();
+    delay(100);
+
     myCAM.start_capture();
+    delay(100);
 
 
-//myCAM.start_capture();
-unsigned long start_time = millis(),
-              last_publish = millis();
 
-while(!myCAM.get_bit(ARDUCHIP_TRIG , CAP_DONE_MASK)) {
-    Particle.process();
-    delay(1);
+    //myCAM.start_capture();
+    unsigned long start_time = millis(),
+                  last_publish = millis();
 
-    unsigned long now = millis();
-    if ((now - last_publish) > 1000) {
-        Particle.publish("status", "waiting for photo " + String(now-start_time));
-        last_publish = now;
+
+//
+//  wait for the photo to be done
+//
+    while(!myCAM.get_bit(ARDUCHIP_TRIG , CAP_DONE_MASK)) {
+        Particle.process();
+        delay(10);
+
+        unsigned long now = millis();
+        if ((now - last_publish) > 1000) {
+            Particle.publish("status", "waiting for photo " + String(now-start_time));
+            last_publish = now;
+        }
+
+        if ((now-start_time) > 30000) {
+            Particle.publish("status", "bailing...");
+            break;
+        }
     }
+    delay(100);
 
-    if ((now-start_time) > 30000) {
-        Particle.publish("status", "bailing...");
-        break;
-    }
-}
+    int length = myCAM.read_fifo_length();
+    Particle.publish("status", "Image size is " + String(length));
+    Serial.println("Image size is " + String(length));
 
+//    if (length > 128000) {
+//        //santiy check for the moment..
+//        length = 128000;
+//    }
 
-int length = myCAM.read_fifo_length();
-Particle.publish("status", "Image size is " + String(length));
+    //String preamble = "IMAGE:" + String(length) + ":";
+   //Udp.sendPacket(preamble.c_str(), preamble.length(), broadcastAddress, UDP_BROADCAST_PORT);
 
     uint8_t temp = 0xff, temp_last = 0;
+    int bytesRead = 0;
+
+
+
     if(myCAM.get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK))
     {
+        delay(100);
         Serial.println(F("ACK CMD CAM Capture Done."));
         Particle.publish("status", "Capture done");
 
+        //myCAM.CS_LOW();
+
+        //myCAM.set_fifo_burst();
+
+
+        //#if !(defined (OV5642_MINI_5MP_PLUS) ||(defined (ARDUCAM_SHIELD_V2) && defined (OV5642_CAM)))
+        //SPI.transfer(0xFF);
+        //#endif
+
+
+        // a better way to read off the fifo buffer?
+        //  static const size_t bufferSize = 4096;
+        //  static uint8_t buffer[bufferSize] = {0xFF};
+        //  while (len) {
+        //      size_t will_copy = (len < bufferSize) ? len : bufferSize;
+        //      myCAM.transferBytes(&buffer[0], &buffer[0], will_copy);
+        //      if (!client.connected()) break;
+        //      client.write(&buffer[0], will_copy);
+        //      len -= will_copy;
+        //  }
+
+
+        udp_buffer_index = 0;
         temp = 0;
         Serial.println(F("ACK IMG"));
+        //while( (temp != 0xD9) | (temp_last != 0xFF) )
+
+        //while (bytesRead < length)
         while( (temp != 0xD9) | (temp_last != 0xFF) )
         {
-          temp_last = temp;
-          temp = myCAM.read_fifo();
-          Serial.write(temp);
-          delayMicroseconds(15);
+         // noInterrupts(); // disable interrupts
+         // SINGLE_THREADED_BLOCK() {
+              temp_last = temp;
+              temp = myCAM.read_fifo();
+
+              //Serial.print(temp, HEX);
+              bytesRead++;
+              delayMicroseconds(15);
+         // }
+         // interrupts();   // enable interrupts
+
+
+          buffer[udp_buffer_index++] = temp;
+
+          if (udp_buffer_index >= UDP_BUFFER_MAX) {
+
+//            for(int i=0;i<udp_buffer_index;i++) {
+//                Serial.print(buffer[i], HEX);
+//            }
+
+            Udp.sendPacket(buffer, udp_buffer_index, broadcastAddress, UDP_BROADCAST_PORT);
+
+            udp_buffer_index = 0;
+            Udp.flush();
+            //delay(10);
+            Particle.process();
+          }
+
+//          if (bytesRead > length) {
+//            break;
+//          }
+
+            if (bytesRead > 1024000) {
+                // failsafe
+                break;
+            }
         }
+
+
+        if (udp_buffer_index != 0) {
+            Udp.sendPacket(buffer, udp_buffer_index, broadcastAddress, UDP_BROADCAST_PORT);
+        }
+
+        //String photoEnd = ":ENDENDEND";
+       // Udp.sendPacket(photoEnd.c_str(), photoEnd.length(), broadcastAddress, UDP_BROADCAST_PORT);
+
         //Clear the capture done flag
+        //myCAM.CS_HIGH();
         myCAM.clear_fifo_flag();
 
         Serial.println(F("End of Photo"));

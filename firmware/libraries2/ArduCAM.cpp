@@ -676,7 +676,6 @@ void ArduCAM::set_fifo_burst()
 	#else
     SPI.transfer(BURST_FIFO_READ);
    #endif
-		
 }
 
 void ArduCAM::CS_HIGH(void)
@@ -765,6 +764,10 @@ void ArduCAM::set_mode(uint8_t mode)
 
 uint8_t ArduCAM::bus_write(int address,int value)
 {
+#if defined (PARTICLE)
+  SPI.beginTransaction(SPISettings(8*MHZ, MSBFIRST, SPI_MODE0));
+#endif
+
 	cbi(P_CS, B_CS);
 	#if defined (RASPBERRY_PI)
 		arducam_spi_write(address | 0x80, value);
@@ -773,16 +776,29 @@ uint8_t ArduCAM::bus_write(int address,int value)
 		SPI.transfer(value);
 	#endif
 	sbi(P_CS, B_CS);
+
+#if defined (PARTICLE)
+	SPI.endTransaction();
+#endif
+
 	return 1;
 }
 
 uint8_t ArduCAM:: bus_read(int address)
 {
+#if defined (PARTICLE)
+  SPI.beginTransaction(SPISettings(8*MHZ, MSBFIRST, SPI_MODE0));
+#endif
+
 	uint8_t value;
 	cbi(P_CS, B_CS);
 	#if defined (RASPBERRY_PI)
 		value = arducam_spi_read(address & 0x7F);
 		sbi(P_CS, B_CS);
+		#if defined (PARTICLE)
+            SPI.endTransaction();
+        #endif
+
 		return value;	
 	#else
 		#if (defined(ESP8266) || defined(__arm__))
@@ -793,12 +809,18 @@ uint8_t ArduCAM:: bus_read(int address)
 		  value = (byte)(value >> 1) | (value << 7);
 		  // take the SS pin high to de-select the chip:
 		  sbi(P_CS, B_CS);
+		  #if defined (PARTICLE)
+                SPI.endTransaction();
+            #endif
 		  return value;
 		#else
 		  SPI.transfer(address);
 		  value = SPI.transfer(0x00);
 		  // take the SS pin high to de-select the chip:
 		  sbi(P_CS, B_CS);
+		  #if defined (PARTICLE)
+                SPI.endTransaction();
+            #endif
 		  return value;
 		#endif
 		#else
@@ -806,6 +828,9 @@ uint8_t ArduCAM:: bus_read(int address)
 		  value = SPI.transfer(0x00);
 		  // take the SS pin high to de-select the chip:
 		  sbi(P_CS, B_CS);
+		  #if defined (PARTICLE)
+                SPI.endTransaction();
+            #endif
 		  return value;
 		#endif
 #endif

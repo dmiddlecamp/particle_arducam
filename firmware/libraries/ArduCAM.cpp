@@ -209,6 +209,33 @@ void ArduCAM::clear_fifo_flag(void)
 	write_reg(ARDUCHIP_FIFO, FIFO_CLEAR_MASK);
 }
 
+void ArduCAM::set_fifo_burst()
+{
+	#if defined (RASPBERRY_PI)
+	transfer(BURST_FIFO_READ);
+	#else
+    SPI.transfer(BURST_FIFO_READ);
+   #endif
+}
+
+
+void ArduCAM::CS_HIGH(void)
+{
+    #if defined (SPARK)
+	    pinHI(A2);  // TODO: FIX HACK!
+    #else
+        sbi(P_CS, B_CS);
+    #endif
+}
+void ArduCAM::CS_LOW(void)
+{
+    #if defined (SPARK)
+	    pinLO(A2);  // TODO: FIX HACK!
+    #else
+        cbi(P_CS, B_CS);
+    #endif
+}
+
 uint32_t ArduCAM::read_fifo_length(void)
 {
 	uint32_t len1,len2,len3,length=0;
@@ -723,3 +750,4 @@ void ArduCAM::OV5642_set_JPEG_size(uint8_t size)
   }
 #endif
 }
+

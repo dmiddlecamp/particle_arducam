@@ -195,6 +195,7 @@
 /****************************************************/
 #define BMP 	0
 #define JPEG	1
+#define RAW 	2
 
 #define OV7670	0
 #define MT9D111	1
@@ -271,6 +272,8 @@
 #define FIFO_RDPTR_RST_MASK     0x10
 #define FIFO_WRPTR_RST_MASK     0x20
 
+#define BURST_FIFO_READ			0x3C  //Burst FIFO read operation
+#define SINGLE_FIFO_READ		0x3D  //Single FIFO read operation
 
 #define ARDUCHIP_REV       		0x40  //ArduCHIP revision
 #define VER_LOW_MASK       		0x3F
@@ -314,6 +317,9 @@ class ArduCAM
 		ArduCAM(byte model,int CS);
 		void InitCAM();
 
+        void CS_HIGH(void);
+        void CS_LOW(void);
+
 		void flush_fifo(void);
 		void start_capture(void);
 		void clear_fifo_flag(void);
@@ -344,6 +350,7 @@ class ArduCAM
 
 		void OV5642_set_JPEG_size(uint8_t size);
         uint32_t read_fifo_length(void);
+        void set_fifo_burst(void);
 
         void set_bit(uint8_t addr, uint8_t bit);
         void clear_bit(uint8_t addr, uint8_t bit);
@@ -352,6 +359,8 @@ class ArduCAM
 
 		int bus_write(int address, int value);
 		uint8_t bus_read(int address);
+
+
 	protected:
 
 
