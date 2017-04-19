@@ -121,7 +121,9 @@ while(1){
     delay(100);
 
     //myCAM.OV5642_set_JPEG_size(OV5642_320x240);
-    myCAM.OV5642_set_JPEG_size(OV5642_2592x1944);
+    //myCAM.OV5640_set_JPEG_size(OV5642_1600x1200);
+    myCAM.OV5640_set_JPEG_size(OV5642_1280x960);
+
     delay(100);
 
     // wait a sec`
@@ -135,12 +137,17 @@ while(1){
 
 void loop()
 {
-    Particle.publish("status", "Taking a picture... 7e");
+    Particle.publish("status", "Taking a picture... 7j");
     Serial.println("Taking a picture...");
 
 
-    //myCAM.OV5640_set_JPEG_size(OV5640_320x240);
-    myCAM.OV5642_set_JPEG_size(OV5642_2592x1944);
+    //myCAM.OV5640_set_JPEG_size(OV5640_320x240);   //works
+    //myCAM.OV5640_set_JPEG_size(OV5642_1600x1200); //doesn't work
+
+    myCAM.OV5640_set_JPEG_size(OV5642_1280x960);    // ?
+
+
+    //myCAM.OV5642_set_JPEG_size(OV5642_2592x1944); //works
     delay(100);
 
     //myCAM.set_bit(ARDUCHIP_GPIO,GPIO_PWDN_MASK);
@@ -239,11 +246,14 @@ void loop()
          // noInterrupts(); // disable interrupts
          // SINGLE_THREADED_BLOCK() {
               temp_last = temp;
+
+              delayMicroseconds(15);
               temp = myCAM.read_fifo();
 
               //Serial.print(temp, HEX);
               bytesRead++;
-              delayMicroseconds(15);
+              //delayMicroseconds(15);
+
          // }
          // interrupts();   // enable interrupts
 
@@ -260,7 +270,7 @@ void loop()
 
             udp_buffer_index = 0;
             Udp.flush();
-            //delay(10);
+            delay(50);
             Particle.process();
           }
 
