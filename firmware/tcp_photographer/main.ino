@@ -3,11 +3,10 @@
 SYSTEM_THREAD(ENABLED);
 
 
-UDP Udp;
-#define UDP_BROADCAST_PORT 5550
-IPAddress broadcastAddress(255,255,255,255);
+TCPClient client;
 
-//#define SERVER_ADDRESS "192.168.2.34"
+#define SERVER_ADDRESS "192.168.2.34"
+#define SERVER_TCP_PORT 5550
 
 #define TX_BUFFER_MAX 1024
 uint8_t buffer[TX_BUFFER_MAX + 1];
@@ -132,14 +131,22 @@ while(1){
     // wait a sec`
     delay(1000);
 
-    Udp.setBuffer(1024);
-    Udp.begin(UDP_BROADCAST_PORT);
+
+    client.connect(SERVER_ADDRESS, SERVER_TCP_PORT);
 }
 
 
 
 void loop()
 {
+    if (!client.connected()) {
+        Particle.publish("status", "Attempting to reconnect to TCP Server...");
+        if (!client.connect(SERVER_ADDRESS, SERVER_TCP_PORT)) {
+            delay(1000);
+            return;
+        }
+    }
+
     Particle.publish("status", "Taking a picture... 7l");
     Serial.println("Taking a picture...");
 
@@ -197,14 +204,6 @@ void loop()
     Particle.publish("status", "Image size is " + String(length));
     Serial.println("Image size is " + String(length));
 
-//    if (length > 128000) {
-//        //santiy check for the moment..
-//        length = 128000;
-//    }
-
-    //String preamble = "IMAGE:" + String(length) + ":";
-   //Udp.sendPacket(preamble.c_str(), preamble.length(), broadcastAddress, UDP_BROADCAST_PORT);
-
     uint8_t temp = 0xff, temp_last = 0;
     int bytesRead = 0;
 
@@ -259,25 +258,14 @@ void loop()
 
           buffer[tx_buffer_index++] = temp;
 
-          if (tx_buffer_index >= TX_BUFFER_MAX) {
+            if (tx_buffer_index >= TX_BUFFER_MAX) {
+                client.write(buffer, tx_buffer_index);
 
-//            for(int i=0;i<tx_buffer_index;i++) {
-//                Serial.print(buffer[i], HEX);
-//            }
+                tx_buffer_index = 0;
+                Particle.process();
+            }
 
-            Udp.sendPacket(buffer, tx_buffer_index, broadcastAddress, UDP_BROADCAST_PORT);
-
-            tx_buffer_index = 0;
-            Udp.flush();
-            delay(20);
-            Particle.process();
-          }
-
-//          if (bytesRead > length) {
-//            break;
-//          }
-
-            if (bytesRead > 1024000) {
+            if (bytesRead > 2048000) {
                 // failsafe
                 break;
             }
@@ -285,11 +273,9 @@ void loop()
 
 
         if (tx_buffer_index != 0) {
-            Udp.sendPacket(buffer, tx_buffer_index, broadcastAddress, UDP_BROADCAST_PORT);
+            //Udp.sendPacket(buffer, tx_buffer_index, broadcastAddress, UDP_BROADCAST_PORT);
+            client.write(buffer, tx_buffer_index);
         }
-
-        //String photoEnd = ":ENDENDEND";
-       // Udp.sendPacket(photoEnd.c_str(), photoEnd.length(), broadcastAddress, UDP_BROADCAST_PORT);
 
         //Clear the capture done flag
         //myCAM.CS_HIGH();
