@@ -34,8 +34,8 @@ how it's wired
 |---	|---	|---	|
 |A2   	|CS   	|SS   	|
 |A3   	|SCK   	|SCK   	|
-|A4   	|MOSI  	|MOSI  	|
-|A5   	|MISO  	|MISO  	|
+|A4   	|MISO  	|MISO  	|
+|A5   	|MOSI  	|MOSI  	|
 |D0   	|SDA    |SDA    |
 |D1   	|SCL    |SCL    |
 
